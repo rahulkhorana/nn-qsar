@@ -19,7 +19,7 @@ class DualEncoderRegressor(nn.Module):
         for param in self.smiles_encoder.parameters():
             param.requires_grad = False
         self.dropout = nn.Dropout(dropout)
-        self.fc1 = nn.Linear(hidden_size * 2, hidden_size)
+        self.fc1 = nn.Linear(1088, hidden_size)
         self.fc2 = nn.Linear(hidden_size, 1)
 
     def forward(
@@ -28,6 +28,7 @@ class DualEncoderRegressor(nn.Module):
         protein_attention_mask,
         smiles_input_ids,
         smiles_attention_mask,
+        **kwargs,
     ):
         prot_out = self.protein_encoder(
             input_ids=protein_input_ids, attention_mask=protein_attention_mask

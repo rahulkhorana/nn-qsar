@@ -51,5 +51,5 @@ def create_hf_dataset(
 
 dataset = create_hf_dataset(data_path + "/qsar_ic50_fasta.csv")
 
-print(dataset)
-print(dataset["train"][0])
+# print(dataset)
+# print(dataset["train"][0])
