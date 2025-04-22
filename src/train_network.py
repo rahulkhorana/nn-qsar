@@ -48,5 +48,7 @@ trainer = Trainer(
     data_collator=coallator,
 )
 
-
 trainer.train()
+trainer.log_metrics("train", trainer.state.global_step, trainer.state.log_history)
+trainer.save_model("./results")
+trainer.evaluate()
