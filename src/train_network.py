@@ -31,13 +31,22 @@ training_args = TrainingArguments(
     per_device_train_batch_size=8,
     per_device_eval_batch_size=8,
     num_train_epochs=5,
+    learning_rate=5e-6,
+    weight_decay=0.01,
+    adam_beta1=0.9,
+    adam_beta2=0.999,
+    adam_epsilon=1e-8,
+    warmup_steps=500,
+    lr_scheduler_type="linear",
     eval_strategy="epoch",
     save_strategy="epoch",
     logging_dir="./logs",
     logging_steps=50,
     load_best_model_at_end=True,
-    metric_for_best_model="eval_loss",
+    metric_for_best_model="eval_rmse",
+    greater_is_better=False,
     remove_unused_columns=False,
+    max_grad_norm=1.0,
 )
 
 trainer = Trainer(
