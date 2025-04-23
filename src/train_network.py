@@ -1,12 +1,14 @@
 import sys
 from pathlib import Path
 
-import torch
+import torch.nn as nn
 from dataset import create_hf_dataset
 from transformers import Trainer, TrainingArguments
 from transformers import AutoTokenizer
 from network import DualEncoderRegressor
 from collator import DataCollatorForDualEncoder
+from sklearn.metrics import root_mean_squared_error, r2_score
+from scipy.stats import pearsonr
 
 
 BASE_PATH = Path(__file__)
@@ -25,6 +27,24 @@ coallator = DataCollatorForDualEncoder(protein_tokenizer, smiles_tokenizer)
 
 
 model = DualEncoderRegressor()
+
+
+class QSARTrainer(Trainer):
+    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
+        loss_fn = nn.MSELoss()
+        labels = inputs.pop("labels")
+        preds = model(**inputs)
+        loss = loss_fn(preds, labels)
+        return (loss, preds) if return_outputs else loss
+
+
+def compute_metrics(eval_pred):
+    preds, labels = eval_pred
+    rmse = root_mean_squared_error(labels, preds, squared=False)
+    r2 = r2_score(labels, preds)
+    pearson_corr = pearsonr(labels, preds)[0]
+    return {"eval_rmse": rmse, "eval_r2": r2, "eval_pearson": pearson_corr}
+
 
 training_args = TrainingArguments(
     output_dir="./results",
@@ -49,12 +69,13 @@ training_args = TrainingArguments(
     max_grad_norm=1.0,
 )
 
-trainer = Trainer(
+trainer = QSARTrainer(
     model=model,
     args=training_args,
     train_dataset=dataset["train"],
     eval_dataset=dataset["test"],
     data_collator=coallator,
+    compute_metrics=compute_metrics,
 )
 
 trainer.train()

@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
-from transformers import AutoModel, AutoTokenizer
+from transformers import AutoModel
+from transformers import AutoConfig, AutoModelForSequenceClassification
 
 
 class DualEncoderRegressor(nn.Module):
@@ -12,7 +13,12 @@ class DualEncoderRegressor(nn.Module):
         dropout=0.1,
     ):
         super().__init__()
-        self.protein_encoder = AutoModel.from_pretrained(protein_model_name)
+        config = AutoConfig.from_pretrained(
+            protein_model_name, num_labels=1, problem_type="regression"
+        )
+        self.protein_encoder = AutoModelForSequenceClassification.from_pretrained(
+            protein_model_name, config=config
+        )
         self.smiles_encoder = AutoModel.from_pretrained(smiles_model_name)
         for param in self.protein_encoder.parameters():
             param.requires_grad = False
@@ -31,8 +37,10 @@ class DualEncoderRegressor(nn.Module):
         **kwargs,
     ):
         prot_out = self.protein_encoder(
-            input_ids=protein_input_ids, attention_mask=protein_attention_mask
-        ).last_hidden_state[:, 0]
+            input_ids=protein_input_ids,
+            attention_mask=protein_attention_mask,
+            output_hidden_states=True,
+        ).hidden_states[-1][:, 0]
         smiles_out = self.smiles_encoder(
             input_ids=smiles_input_ids, attention_mask=smiles_attention_mask
         ).last_hidden_state[:, 0]
